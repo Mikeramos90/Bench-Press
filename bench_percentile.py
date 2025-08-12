@@ -14,39 +14,27 @@ def load_data():
     Downloads, extracts, and loads the OpenPowerlifting.org dataset efficiently.
     This function is cached so it only runs once.
     """
-    # --- EFFICIENT CHANGE 1: Define required columns beforehand ---
-    # This tells pandas to only load the data we actually need.
     required_cols = [
         'Name', 'Sex', 'Event', 'Equipment', 'Country',
         'Date', 'WeightClassKg', 'Best3BenchKg'
     ]
-
-    # Download dataset from the URL
     r = requests.get(DATA_URL)
-    
-    # Use a temporary file to store the downloaded zip archive
     with tempfile.NamedTemporaryFile(delete=False, suffix=".zip") as tmp:
         tmp.write(r.content)
         tmp_path = tmp.name
-
-    # Extract the CSV file from the ZIP archive
     with zipfile.ZipFile(tmp_path, 'r') as zip_ref:
         csv_name = [f for f in zip_ref.namelist() if f.endswith('.csv')][0]
         extract_path = tempfile.gettempdir()
         zip_ref.extract(csv_name, extract_path)
         csv_path = f"{extract_path}/{csv_name}"
-
-    # --- EFFICIENT CHANGE 2: Use `usecols` to save memory ---
-    # Now, pandas will only read the columns specified in required_cols.
-    # The `low_memory=False` argument is no longer needed.
     df = pd.read_csv(csv_path, usecols=required_cols)
-
-    # The rest of your processing remains the same
     df['Year'] = pd.to_datetime(df['Date'], errors='coerce').dt.year
     df['Best3BenchKg'] = pd.to_numeric(df['Best3BenchKg'], errors='coerce')
+    
+    # --- THE FIX IS ON THIS LINE ---
     df = df.dropna(subset=['Best3BenchKg', 'Year', 'Country', 'WeightClassKg', 'Event'])
-    df['Year'] = df['Year'].astype(int)
 
+    df['Year'] = df['Year'].astype(int)
     return df
 
 @st.cache_data
