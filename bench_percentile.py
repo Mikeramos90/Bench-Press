@@ -14,10 +14,12 @@ def load_data():
     Downloads, extracts, and loads the OpenPowerlifting.org dataset efficiently.
     This function is cached so it only runs once.
     """
+    # --- CHANGE 1: Add 'Tested' to the list of required columns ---
     required_cols = [
         'Name', 'Sex', 'Event', 'Equipment', 'Country',
-        'Date', 'WeightClassKg', 'Best3BenchKg'
+        'Date', 'WeightClassKg', 'Best3BenchKg', 'Tested'
     ]
+
     r = requests.get(DATA_URL)
     with tempfile.NamedTemporaryFile(delete=False, suffix=".zip") as tmp:
         tmp.write(r.content)
@@ -27,24 +29,25 @@ def load_data():
         extract_path = tempfile.gettempdir()
         zip_ref.extract(csv_name, extract_path)
         csv_path = f"{extract_path}/{csv_name}"
+        
     df = pd.read_csv(csv_path, usecols=required_cols)
     df['Year'] = pd.to_datetime(df['Date'], errors='coerce').dt.year
     df['Best3BenchKg'] = pd.to_numeric(df['Best3BenchKg'], errors='coerce')
     
-    # --- THE FIX IS ON THIS LINE ---
-    df = df.dropna(subset=['Best3BenchKg', 'Year', 'Country', 'WeightClassKg', 'Event'])
+    # --- CHANGE 2: Add 'Tested' to the dropna list ---
+    df = df.dropna(subset=['Best3BenchKg', 'Year', 'Country', 'WeightClassKg', 'Event', 'Tested'])
 
     df['Year'] = df['Year'].astype(int)
     return df
 
 @st.cache_data
-def preprocess(df, sex, event, equipment, weight_class, year, country):
+# --- CHANGE 1: Add 'tested_status' to the function signature ---
+def preprocess(df, sex, event, equipment, weight_class, year, country, tested_status):
     df_filtered = df.copy()
     
     # Apply standard filters
     df_filtered = df_filtered[df_filtered['Sex'] == sex]
     
-    # This logic is correct because 'event' now holds the real data code (e.g., "SBD")
     if event != "All":
         df_filtered = df_filtered[df_filtered['Event'] == event]
 
@@ -56,8 +59,13 @@ def preprocess(df, sex, event, equipment, weight_class, year, country):
 
     if year != "All":
         df_filtered = df_filtered[df_filtered['Year'] == year]
+        
     if country != "All":
         df_filtered = df_filtered[df_filtered['Country'] == country]
+        
+    # --- CHANGE 2: Add the new filtering logic for 'Tested' status ---
+    if tested_status != "All":
+        df_filtered = df_filtered[df_filtered['Tested'] == tested_status]
         
     if df_filtered.empty:
         return df_filtered
@@ -133,10 +141,15 @@ def main():
     with col5:
         year = st.selectbox("Year 📅", year_list)
     with col6:
-        # Use the 'index' parameter to set the default value
         country = st.selectbox("Country 🌍", country_list, index=default_country_index)
-    # Preprocess the data using all the selected filters
-    filtered_df = preprocess(df, sex, event, equipment, weight_class, year, country)
+
+    # --- CHANGE 1: Add a third row for the 'Tested' filter ---
+    col7, col8, col9 = st.columns(3)
+    with col7:
+        tested_status = st.selectbox("Tested", ["All", "Yes", "No"])
+        
+    # --- CHANGE 2: Pass the new 'tested_status' to the preprocess function ---
+    filtered_df = preprocess(df, sex, event, equipment, weight_class, year, country, tested_status)
     
     # Input for the user's bench press
     st.header("Calculate Your Percentile")
