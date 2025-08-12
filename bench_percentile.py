@@ -51,7 +51,7 @@ def load_data():
 
 @st.cache_data
 def preprocess(df, sex, event, equipment, weight_class, year, country):
-    # --- NEW: Add a mapping from dropdown options to data codes ---
+    # Add a mapping from dropdown options to data codes
     EVENT_MAP = {
         "Full Power": "SBD",
         "Bench Only": "B",
@@ -63,9 +63,9 @@ def preprocess(df, sex, event, equipment, weight_class, year, country):
     # Apply standard filters
     df_filtered = df_filtered[df_filtered['Sex'] == sex]
     
-    # --- UPDATED: Use the mapping to filter correctly ---
+    # Use the mapping to filter correctly
     if event != "All":
-        event_code = EVENT_MAP.get(event)  # Translate friendly name to data code
+        event_code = EVENT_MAP.get(event)
         df_filtered = df_filtered[df_filtered['Event'] == event_code]
 
     if equipment != "All":
@@ -81,6 +81,8 @@ def preprocess(df, sex, event, equipment, weight_class, year, country):
         df_filtered = df_filtered[df_filtered['Country'] == country]
         
     df_processed = df_filtered.groupby('Name', as_index=False)['Best3BenchKg'].max()
+    
+    # --- THE FIX IS ON THIS LINE ---
     df_processed = df_processed.sort_values(by='Best3BenchKg').reset_index(drop=True)
 
     return df_processed
