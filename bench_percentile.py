@@ -51,16 +51,26 @@ def load_data():
 
 @st.cache_data
 def preprocess(df, sex, event, equipment, weight_class, year, country):
+    # --- NEW: Add a mapping from dropdown options to data codes ---
+    EVENT_MAP = {
+        "Full Power": "SBD",
+        "Bench Only": "B",
+        "Push-Pull": "BD"
+    }
+
     df_filtered = df.copy()
     
     # Apply standard filters
     df_filtered = df_filtered[df_filtered['Sex'] == sex]
+    
+    # --- UPDATED: Use the mapping to filter correctly ---
     if event != "All":
-        df_filtered = df_filtered[df_filtered['Event'] == event]
+        event_code = EVENT_MAP.get(event)  # Translate friendly name to data code
+        df_filtered = df_filtered[df_filtered['Event'] == event_code]
+
     if equipment != "All":
         df_filtered = df_filtered[df_filtered['Equipment'] == equipment]
         
-    # --- CHANGE HERE: Add the new filter for weight class ---
     if weight_class != "All":
         df_filtered = df_filtered[df_filtered['WeightClassKg'] == weight_class]
 
@@ -71,7 +81,7 @@ def preprocess(df, sex, event, equipment, weight_class, year, country):
         df_filtered = df_filtered[df_filtered['Country'] == country]
         
     df_processed = df_filtered.groupby('Name', as_index=False)['Best3BenchKg'].max()
-    df_processed = df_processed.sort_values(by='Best3BenchKg').reset_index(drop=True)
+    df_processed = df_processed.sort_values(by='Best3GenchKg').reset_index(drop=True)
 
     return df_processed
 
@@ -103,7 +113,7 @@ def main():
     with col1:
         sex = st.selectbox("Sex", ["M", "F"])
     with col2:
-        event = st.selectbox("Event", ["All", "Full Power", "Bench Only", "Push-Pull"])
+        event = st.selectbox("Event", ["All", "SBD", "B", "BD"])
     with col3:
         equipment = st.selectbox("Equipment", ["All", "Raw", "Wraps", "Single-ply", "Multi-ply"])
 
