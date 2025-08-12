@@ -44,7 +44,7 @@ def load_data():
     # The rest of your processing remains the same
     df['Year'] = pd.to_datetime(df['Date'], errors='coerce').dt.year
     df['Best3BenchKg'] = pd.to_numeric(df['Best3BenchKg'], errors='coerce')
-    df = df.dropna(subset=['Best3BenchKg', 'Year', 'Country', 'WeightClassKg', 'event'])
+    df = df.dropna(subset=['Best3BenchKg', 'Year', 'Country', 'WeightClassKg', 'Event'])
     df['Year'] = df['Year'].astype(int)
 
     return df
