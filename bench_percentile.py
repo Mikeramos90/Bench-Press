@@ -11,9 +11,16 @@ DATA_URL = "https://openpowerlifting.gitlab.io/opl-csv/files/openpowerlifting-la
 @st.cache_data
 def load_data():
     """
-    Downloads, extracts, and loads the OpenPowerlifting.org dataset.
+    Downloads, extracts, and loads the OpenPowerlifting.org dataset efficiently.
     This function is cached so it only runs once.
     """
+    # --- EFFICIENT CHANGE 1: Define required columns beforehand ---
+    # This tells pandas to only load the data we actually need.
+    required_cols = [
+        'Name', 'Sex', 'Event', 'Equipment', 'Country',
+        'Date', 'WeightClassKg', 'Best3BenchKg'
+    ]
+
     # Download dataset from the URL
     r = requests.get(DATA_URL)
     
@@ -29,18 +36,15 @@ def load_data():
         zip_ref.extract(csv_name, extract_path)
         csv_path = f"{extract_path}/{csv_name}"
 
-    # Load the CSV data into a pandas DataFrame
-    df = pd.read_csv(csv_path, low_memory=False)
+    # --- EFFICIENT CHANGE 2: Use `usecols` to save memory ---
+    # Now, pandas will only read the columns specified in required_cols.
+    # The `low_memory=False` argument is no longer needed.
+    df = pd.read_csv(csv_path, usecols=required_cols)
 
-    # --- CHANGE HERE: Add 'WeightClassKg' to the list of columns ---
-    df = df[['Name', 'Sex', 'Event', 'Equipment', 'Country', 'Date', 'WeightClassKg', 'Best3BenchKg']]
-
+    # The rest of your processing remains the same
     df['Year'] = pd.to_datetime(df['Date'], errors='coerce').dt.year
     df['Best3BenchKg'] = pd.to_numeric(df['Best3BenchKg'], errors='coerce')
-    
-    # --- CHANGE HERE: Also drop rows missing 'WeightClassKg' ---
     df = df.dropna(subset=['Best3BenchKg', 'Year', 'Country', 'WeightClassKg'])
-
     df['Year'] = df['Year'].astype(int)
 
     return df
