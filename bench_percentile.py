@@ -99,9 +99,9 @@ def main():
     with col1:
         sex = st.selectbox("Sex", ["M", "F"])
     with col2:
-        event = st.selectbox("Event", ["All", "SBD", "B", "BD"])
+        event = st.selectbox("Event", ["All", "Full Power", "Bench Only", "Push-Pull"])
     with col3:
-        equipment = st.selectbox("Equipment", ["All", "Raw", "Raw+Wraps", "Single-ply", "Multi-ply"])
+        equipment = st.selectbox("Equipment", ["All", "Raw", "Wraps", "Single-ply", "Multi-ply"])
 
     # Dynamically choose the weight class list based on the selected sex
     if sex == 'M':
