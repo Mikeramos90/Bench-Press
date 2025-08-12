@@ -39,22 +39,14 @@ def load_data():
 
 @st.cache_data
 def preprocess(df, sex, event, equipment, weight_class, year, country):
-    # Add a mapping from dropdown options to data codes
-    EVENT_MAP = {
-        "SBD": "Full Power",
-        "B": "Bench Only",
-        "BD": "Push-Pull"
-    }
-
     df_filtered = df.copy()
     
     # Apply standard filters
     df_filtered = df_filtered[df_filtered['Sex'] == sex]
     
-    # Use the mapping to filter correctly
+    # This logic is correct because 'event' now holds the real data code (e.g., "SBD")
     if event != "All":
-        event_code = EVENT_MAP.get(event)
-        df_filtered = df_filtered[df_filtered['Event'] == event_code]
+        df_filtered = df_filtered[df_filtered['Event'] == event]
 
     if equipment != "All":
         df_filtered = df_filtered[df_filtered['Equipment'] == equipment]
@@ -62,15 +54,15 @@ def preprocess(df, sex, event, equipment, weight_class, year, country):
     if weight_class != "All":
         df_filtered = df_filtered[df_filtered['WeightClassKg'] == weight_class]
 
-    # Apply year and country filters
     if year != "All":
         df_filtered = df_filtered[df_filtered['Year'] == year]
     if country != "All":
         df_filtered = df_filtered[df_filtered['Country'] == country]
         
+    if df_filtered.empty:
+        return df_filtered
+
     df_processed = df_filtered.groupby('Name', as_index=False)['Best3BenchKg'].max()
-    
-    # --- THE FIX IS ON THIS LINE ---
     df_processed = df_processed.sort_values(by='Best3BenchKg').reset_index(drop=True)
 
     return df_processed
@@ -86,15 +78,25 @@ def main():
     # Show a spinner message during the long initial data load
     with st.spinner('Performing first-time setup... (This may take a few minutes)'):
         df = load_data()
+
+        
     st.success('Data loaded successfully!')
 
     st.header("Select Your Category")
     
-    # Define the standard IPF weight classes for men and women
     TRADITIONAL_MEN_CLASSES = ['All', '52', '56', '60', '67.5', '75', '82.5', '90', '100', '110', '125', '140', '140+']
     TRADITIONAL_WOMEN_CLASSES = ['All', '44', '48', '52', '56', '60', '67.5', '75', '82.5', '90', '90+']
 
-    # Create lists for the other filters as before
+    # --- FINALIZED: The complete and correct display mapping ---
+    EVENT_DISPLAY_MAP = {
+        "All": "All",
+        "SBD": "Full Power",
+        "B": "Bench Only",
+        "BD": "Push-Pull",
+        "SB": "Squat & Bench"
+    }
+    event_codes = list(EVENT_DISPLAY_MAP.keys())
+
     country_list = ["All"] + sorted(df['Country'].dropna().unique().tolist())
     year_list = ["All"] + sorted(df['Year'].dropna().unique().tolist(), reverse=True)
 
@@ -103,7 +105,12 @@ def main():
     with col1:
         sex = st.selectbox("Sex", ["M", "F"])
     with col2:
-        event = st.selectbox("Event", ["All", "SBD", "B", "BD"])
+        # This selectbox now uses the finalized mapping
+        event = st.selectbox(
+            "Event",
+            options=event_codes,
+            format_func=lambda code: EVENT_DISPLAY_MAP[code]
+        )
     with col3:
         equipment = st.selectbox("Equipment", ["All", "Raw", "Wraps", "Single-ply", "Multi-ply"])
 
