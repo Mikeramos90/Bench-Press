@@ -81,7 +81,7 @@ def preprocess(df, sex, event, equipment, weight_class, year, country):
         df_filtered = df_filtered[df_filtered['Country'] == country]
         
     df_processed = df_filtered.groupby('Name', as_index=False)['Best3BenchKg'].max()
-    df_processed = df_processed.sort_values(by='Best3GenchKg').reset_index(drop=True)
+    df_processed = df_processed.sort_values(by='Best3BenchKg').reset_index(drop=True)
 
     return df_processed
 
