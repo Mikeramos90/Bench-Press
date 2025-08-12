@@ -53,9 +53,9 @@ def load_data():
 def preprocess(df, sex, event, equipment, weight_class, year, country):
     # Add a mapping from dropdown options to data codes
     EVENT_MAP = {
-        "Full Power": "SBD",
-        "Bench Only": "B",
-        "Push-Pull": "BD"
+        "SBD": "Full Power",
+        "B": "Bench Only",
+        "BD": "Push-Pull"
     }
 
     df_filtered = df.copy()
